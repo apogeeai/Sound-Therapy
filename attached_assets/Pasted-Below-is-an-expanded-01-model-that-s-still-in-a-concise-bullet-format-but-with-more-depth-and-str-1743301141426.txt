@@ -1,0 +1,52 @@
+Below is an expanded “01 model” that’s still in a concise bullet format, but with more depth and strategic language designed to catch a VP of Marketing’s attention. It showcases your mastery of demand generation, highlights data-backed achievements, and emphasizes leadership in complex marketing ecosystems. Compare these to the previous versions and pick whichever resonates most with your professional brand.
+
+---
+
+### Demand Generation/Marketing Automation Manager – Metro Credit Union, Chelsea, MA (06/2020 – 12/2024)
+
+- **Orchestrated** a full-funnel transition from HubSpot to Marketo + 6sense, driving **$15.4M** in incremental net earnings in the CD segment by elevating member engagement, retention, and brand visibility.  
+- **Established** a scalable demand generation framework combining PLG, RevOps, and multi-touch attribution—raising funnel engagement by **25%** and speeding up the pipeline.  
+- **Engineered** a custom AI-powered predictive analytics dashboard, delivering **real-time** campaign insights and empowering agile, data-driven marketing optimizations.  
+
+### Marketing Content Specialist (Contract) – Nuance Communications (Microsoft), Burlington, MA (04/2020 – 09/2020)
+
+- **Led** advanced global marketing automation and CRM integrations, refining attribution models to push pipeline velocity up **35%** across diverse product lines.  
+- **Drove** comprehensive A/B testing protocols, uncovering high-impact optimizations that increased campaign ROI and showcased a rigorous, data-centric approach to scaling demand.
+
+### Digital Marketing Manager/Web Developer – Shorelight Education, Boston, MA (02/2014 – 03/2019)
+
+- **Spearheaded** demand generation across 19+ global partner programs by uniting SEO-focused WordPress microsites with highly targeted email nurture streams, resulting in a **40%** lift in qualified leads.  
+- **Modernized** marketing automation from HubSpot to Marketo, leveraging dynamic personalization and robust analytics (Tableau, PowerBI) to secure a **25%** spike in conversion rates while accelerating the student enrollment funnel.
+
+### Marketing Web Developer – Bullhorn, Boston, MA (02/2013 – 03/2014)
+
+- **Executed** large-scale Drupal CMS enhancements that boosted site performance, SEO rankings, and lead quality—fully aligning marketing strategy with top-tier user experiences.  
+- **Integrated** SEO/SEM best practices and email campaigns under one cohesive strategy, simultaneously contributing graphic design insights that elevated brand messaging and UI/UX.
+
+### Marketing Web Developer – AppNeta (Broadcom), Boston, MA (05/2010 – 01/2013)
+
+- **Managed** multiple end-to-end website overhauls (2010, 2013), cutting bounce rates by **45%** through modernized UX design, CMS upgrades, and SEO optimizations.  
+- **Implemented** Marketo + Salesforce automations to deliver high-precision email & landing page campaigns, significantly accelerating lead generation and fueling pipeline growth.
+
+### Co-Founder & Project Manager – Ironworks Interactive, Boston, MA (05/2007 – 04/2010)
+
+- **Developed** and maintained client-facing websites (HTML, CSS, CMS, JavaScript), incorporating automated marketing workflows via HubSpot/Marketo to capture and nurture leads.  
+- **Pioneered** early AI/ML explorations for funnel optimization, illustrating a forward-looking approach to next-generation marketing solutions.
+
+---
+
+## Technical Skills (Refined for Impact)
+
+- **Demand Generation & Growth**: Marketing Automation (Marketo, HubSpot), ABM, PLG, Multi-touch Attribution, A/B Testing, CRO, Pipeline Velocity, AI-driven Analytics, ROI Analysis  
+- **Marketing Technology**: Salesforce, Google Analytics 4, SEMrush, WordPress, Drupal, Adobe Creative Suite, Canva  
+- **Web & Cloud**: HTML, CSS, JavaScript, Node.js, AWS, Docker, Kubernetes, GitHub, REST APIs, PowerBI/Tableau  
+- **AI & Automation**: ChatGPT, GitHub Copilot, TensorFlow, Prompt Engineering
+
+---
+
+**How This Impresses a VP of Marketing**  
+1. **Business Impact** – Each bullet ties a strategic initiative to a specific outcome (revenue gains, percentage lifts, ROI).  
+2. **Advanced Tools & Methodologies** – Clearly highlights expertise in Marketo, multi-touch attribution, AI analytics, etc.  
+3. **Leadership & Innovation** – Emphasizes how you lead cross-functional processes, execute complex migrations, and harness emerging tech (AI/ML) to drive growth.  
+
+Use these bullet points to demonstrate that you’re not only a master of technical marketing but also a proven strategist who consistently translates marketing spend into measurable revenue results.
