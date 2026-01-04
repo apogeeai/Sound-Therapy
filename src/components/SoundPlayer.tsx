@@ -57,6 +57,8 @@ export function SoundPlayer({
   colorScheme: ColorScheme;
 }) {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   const [selectedSound, setSelectedSound] = useState<keyof typeof SOUNDS>('528 Hz (Love/Miracle)');
   const [oscillator, setOscillator] = useState<Tone.Oscillator | null>(null);
   const [noise, setNoise] = useState<Tone.Noise | null>(null);
@@ -206,8 +208,14 @@ export function SoundPlayer({
       // Handle audio files
       else if (soundDef && typeof soundDef === 'object' && soundDef.type === 'file') {
         console.log('Loading audio file...', { path: soundDef.path });
+        setIsLoading(true);
+        setLoadingProgress(0);
+        
         try {
-          // Create player
+          // Show loading progress
+          setLoadingProgress(10);
+          
+          // Create player - Tone.Player will handle loading
           const audioPlayer = new Tone.Player({
             url: soundDef.path,
             loop: true,
@@ -220,35 +228,39 @@ export function SoundPlayer({
           setPlayer(audioPlayer);
           playerRef.current = audioPlayer;
           
-          // Load the file and wait for it
-          const buffer = await Tone.Buffer.fromUrl(soundDef.path);
+          setLoadingProgress(30);
           
-          // Set the buffer on the player
-          audioPlayer.buffer = buffer;
+          // Load the buffer - this is the slow part for large files
+          await audioPlayer.load();
           
-          // Wait a bit for the buffer to be ready
-          await new Promise(resolve => setTimeout(resolve, 100));
+          setLoadingProgress(90);
           
           // Verify the buffer loaded
-          if (!buffer || !buffer.loaded) {
+          if (!audioPlayer.buffer || !audioPlayer.buffer.loaded) {
             throw new Error('Buffer did not load successfully');
           }
+          
+          setLoadingProgress(100);
           
           // Start playback
           audioPlayer.start();
           console.log('Audio file started successfully', { 
-            duration: buffer.duration,
-            sampleRate: buffer.sampleRate 
+            duration: audioPlayer.buffer.duration,
+            sampleRate: audioPlayer.buffer.sampleRate 
           });
           onFrequencyChange(528); // Default frequency for visualization
           setIsPlaying(true);
           isPlayingRef.current = true;
+          setIsLoading(false);
+          setLoadingProgress(0);
         } catch (error) {
           console.error('Failed to create/load audio player:', error);
           const errorMessage = error instanceof Error ? error.message : String(error);
           console.error('Full error details:', error, { path: soundDef.path });
           setIsPlaying(false);
           isPlayingRef.current = false;
+          setIsLoading(false);
+          setLoadingProgress(0);
           setPlayer(null);
           if (playerRef.current) {
             try {
@@ -500,15 +512,24 @@ export function SoundPlayer({
 
           <button
             onClick={toggleSound}
+            disabled={isLoading}
             className="w-full py-6 px-8 text-2xl text-white 
-                     transition-all duration-3000 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl border backdrop-blur-sm hover:opacity-90"
+                     transition-all duration-3000 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl border backdrop-blur-sm hover:opacity-90 disabled:opacity-70 disabled:cursor-wait relative overflow-hidden"
             style={{
               borderRadius: '8px',
               background: `linear-gradient(135deg, ${colorScheme.primaryColor}E6, ${colorScheme.secondaryColor}E6)`,
               borderColor: `${colorScheme.primaryColor}40`
             }}
           >
-            {isPlaying ? (
+            {isLoading && (
+              <div 
+                className="absolute inset-0 bg-white/20 transition-all duration-300"
+                style={{ width: `${loadingProgress}%` }}
+              />
+            )}
+            {isLoading ? (
+              <span className="relative z-10">Loading... {Math.round(loadingProgress)}%</span>
+            ) : isPlaying ? (
               <>
                 <Pause className="w-8 h-8" />
                 <span>Pause</span>
