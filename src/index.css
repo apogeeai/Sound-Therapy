@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  * {
+    font-family: 'Inter', sans-serif;
+  }
+}
+
 @keyframes gradient {
   0% {
     background-position: 0% 50%;
@@ -14,6 +20,15 @@
   }
 }
 
+@keyframes sceneryFade {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
 @layer utilities {
   .drop-shadow-glow {
     filter: drop-shadow(0 0 0.75rem rgba(167, 139, 250, 0.5));
@@ -23,5 +38,22 @@
     background: linear-gradient(-45deg, #240046, #3c096c, #5a189a, #7b2cbf);
     background-size: 400% 400%;
     animation: gradient 15s ease infinite;
+  }
+  
+  .glassmorphic {
+    box-shadow: 
+      0 8px 32px 0 rgba(31, 38, 135, 0.37),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.2),
+      inset 0 -1px 0 0 rgba(255, 255, 255, 0.1);
+  }
+  
+  .glassmorphic::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
   }
 }
