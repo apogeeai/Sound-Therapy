@@ -3,7 +3,7 @@ import * as Tone from 'tone';
 import { Play, Pause, Volume2, VolumeX } from 'lucide-react';
 
 // Sound definitions - can be frequency (number), noise type (string), or audio file (object)
-type SoundType = number | 'pink' | 'brown' | { type: 'file'; path: string };
+type SoundType = number | 'pink' | 'brown' | 'green' | 'white' | { type: 'file'; path: string };
 
 const SOUNDS: Record<string, SoundType> = {
   // Solfeggio Frequencies
@@ -21,7 +21,7 @@ const SOUNDS: Record<string, SoundType> = {
   'Pink Noise': 'pink',
   'Brown Noise': 'brown',
   'White Noise': { type: 'file', path: '/white-noise.mp3' },
-  'Green Noise': { type: 'file', path: '/green-noise.mp3' },
+  'Green Noise': 'green', // Generated with Tone.js
   
   // Nature Sounds
   'Deschutes River': { type: 'file', path: '/deschutes-river.mp3' },
@@ -73,7 +73,7 @@ export function SoundPlayer({
   const previousVolume = useRef(volume);
   const [timer, setTimer] = useState(0); // Timer in seconds (countdown)
   const [selectedTimerDuration, setSelectedTimerDuration] = useState<number | null>(null); // Selected duration in seconds
-  const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isPlayingRef = useRef(false);
   
   // Timer presets in minutes
@@ -191,19 +191,40 @@ export function SoundPlayer({
       else if (typeof soundDef === 'string') {
         console.log('Creating noise...', { type: soundDef });
         try {
-          const noiseGen = new Tone.Noise({
-            type: soundDef as 'pink' | 'brown' | 'white',
-          });
-          noiseGen.connect(volumeControlRef.current!);
+          let noiseGen: Tone.Noise;
+          
+          // Green noise is not directly supported, so we'll use pink noise filtered
+          if (soundDef === 'green') {
+            // Create pink noise and apply a filter to approximate green noise
+            noiseGen = new Tone.Noise({
+              type: 'pink',
+            });
+            // Apply a bandpass filter to emphasize mid-range frequencies (green noise characteristic)
+            const filter = new Tone.Filter({
+              frequency: 500,
+              type: 'bandpass',
+              Q: 2,
+            });
+            noiseGen.connect(filter);
+            filter.connect(volumeControlRef.current!);
+          } else {
+            noiseGen = new Tone.Noise({
+              type: soundDef as 'pink' | 'brown' | 'white',
+            });
+            noiseGen.connect(volumeControlRef.current!);
+          }
           setNoise(noiseGen);
           noiseRef.current = noiseGen;
           noiseGen.start();
           console.log('Noise started successfully');
           onFrequencyChange(432);
           setIsPlaying(true);
+          isPlayingRef.current = true;
         } catch (error) {
           console.error('Failed to create noise:', error);
           alert('Failed to play sound. Please try again.');
+          setIsPlaying(false);
+          isPlayingRef.current = false;
         }
       }
       // Handle audio files
@@ -232,7 +253,8 @@ export function SoundPlayer({
           setLoadingProgress(30);
           
           // Load the buffer - this is the slow part for large files
-          await audioPlayer.load();
+          // Load the buffer - pass the URL to load()
+          await audioPlayer.load(soundDef.path);
           
           // Wait for buffer to be fully ready with retry logic
           let attempts = 0;
@@ -268,7 +290,24 @@ export function SoundPlayer({
           setLoadingProgress(0);
         } catch (error) {
           console.error('Failed to create/load audio player:', error);
-          const errorMessage = error instanceof Error ? error.message : String(error);
+          
+          // Safely extract error message
+          let errorMessage = 'Unknown error';
+          try {
+            if (error && typeof error === 'object') {
+              if ('message' in error && typeof error.message === 'string') {
+                errorMessage = error.message;
+              } else if ('toString' in error && typeof error.toString === 'function') {
+                errorMessage = error.toString();
+              }
+            } else if (error) {
+              errorMessage = String(error);
+            }
+          } catch (e) {
+            console.error('Error extracting error message:', e);
+            errorMessage = 'Failed to load audio file';
+          }
+          
           console.error('Full error details:', error, { path: soundDef.path });
           setIsPlaying(false);
           isPlayingRef.current = false;
@@ -283,8 +322,9 @@ export function SoundPlayer({
             }
             playerRef.current = null;
           }
-          // Show user-friendly error
-          alert(`Could not load audio file: ${soundDef.path}\n\nError: ${errorMessage}\n\nPlease check the browser console for more details.`);
+          // Show user-friendly error without accessing undefined properties
+          console.warn(`Could not load audio file: ${soundDef.path}. Error: ${errorMessage}`);
+          // Don't show alert for every error to avoid spam
         }
       }
       
