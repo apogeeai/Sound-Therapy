@@ -5,8 +5,8 @@ run = "npm run dev"
 channel = "stable-24_05"
 
 [deployment]
-run = ["sh", "-c", "npm run build && npm run preview"]
-deploymentTarget = "static"
+run = ["npx", "serve", "dist", "-l", "5000"]
+deploymentTarget = "autoscale"
 publicDir = "dist"
 build = ["npm", "run", "build"]
 
