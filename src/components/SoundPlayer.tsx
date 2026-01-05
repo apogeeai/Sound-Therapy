@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import * as Tone from 'tone';
 import { Play, Pause, Volume2, VolumeX } from 'lucide-react';
 
@@ -75,6 +75,11 @@ export function SoundPlayer({
   const [selectedTimerDuration, setSelectedTimerDuration] = useState<number | null>(null); // Selected duration in seconds
   const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isPlayingRef = useRef(false);
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+  const keepAliveIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  
+  // Suppress unused variable warnings for state setters used for React updates
+  void oscillator; void noise; void player; void timer;
   
   // Timer presets in minutes
   const TIMER_PRESETS = [
@@ -88,19 +93,67 @@ export function SoundPlayer({
     { label: '60 minutes', value: 60 * 60 },
   ];
 
+  const requestWakeLock = useCallback(async () => {
+    if ('wakeLock' in navigator && navigator.wakeLock) {
+      try {
+        wakeLockRef.current = await navigator.wakeLock.request('screen');
+        console.log('Wake lock acquired');
+        wakeLockRef.current.addEventListener('release', () => {
+          console.log('Wake lock released');
+        });
+      } catch (err) {
+        console.log('Wake lock request failed:', err);
+      }
+    }
+  }, []);
+
+  const releaseWakeLock = useCallback(async () => {
+    if (wakeLockRef.current) {
+      try {
+        await wakeLockRef.current.release();
+        wakeLockRef.current = null;
+        console.log('Wake lock released manually');
+      } catch (err) {
+        console.log('Wake lock release failed:', err);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     // Initialize volume control
     volumeControlRef.current = new Tone.Volume(volume).toDestination();
     console.log('Volume control initialized', { volume });
+
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible' && isPlayingRef.current) {
+        console.log('Page became visible, resuming audio context');
+        try {
+          await Tone.start();
+          if (Tone.context.state !== 'running') {
+            await Tone.context.resume();
+          }
+          requestWakeLock();
+        } catch (err) {
+          console.log('Failed to resume audio:', err);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     
     return () => {
       console.log('Cleaning up audio nodes');
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       volumeControlRef.current?.dispose();
       if (timerIntervalRef.current) {
         clearInterval(timerIntervalRef.current);
       }
+      if (keepAliveIntervalRef.current) {
+        clearInterval(keepAliveIntervalRef.current);
+      }
+      releaseWakeLock();
     };
-  }, []);
+  }, [requestWakeLock, releaseWakeLock]);
 
   // Cleanup audio sources when component unmounts
   useEffect(() => {
@@ -155,6 +208,7 @@ export function SoundPlayer({
       try {
         console.log('Starting Tone.js context');
         await Tone.start();
+        await requestWakeLock();
       } catch (error) {
         console.error('Failed to start Tone.js:', error);
         return;
@@ -399,6 +453,8 @@ export function SoundPlayer({
       setNoise(null);
       setPlayer(null);
       console.log('Sound stopped and cleaned up');
+      
+      releaseWakeLock();
       
       // Stop timer
       if (timerIntervalRef.current) {
