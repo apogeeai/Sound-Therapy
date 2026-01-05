@@ -21,6 +21,7 @@ const SOUNDS: Record<string, SoundType> = {
   'Pink Noise': 'pink',
   'Brown Noise': 'brown',
   'White Noise': { type: 'file', path: '/white-noise.mp3' },
+  'Green Noise': { type: 'file', path: '/green-noise.mp3' },
   
   // Nature Sounds
   'Deschutes River': { type: 'file', path: '/deschutes-river.mp3' },
@@ -233,11 +234,23 @@ export function SoundPlayer({
           // Load the buffer - this is the slow part for large files
           await audioPlayer.load();
           
+          // Wait for buffer to be fully ready with retry logic
+          let attempts = 0;
+          while ((!audioPlayer.buffer || !audioPlayer.buffer.loaded) && attempts < 50) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+            const progress = Math.min(90, 30 + (attempts * 1.2));
+            setLoadingProgress(progress);
+          }
+          
           setLoadingProgress(90);
           
-          // Verify the buffer loaded
+          // Verify the buffer loaded - give it one more chance
           if (!audioPlayer.buffer || !audioPlayer.buffer.loaded) {
-            throw new Error('Buffer did not load successfully');
+            await new Promise(resolve => setTimeout(resolve, 500));
+            if (!audioPlayer.buffer || !audioPlayer.buffer.loaded) {
+              throw new Error('Buffer did not load successfully after waiting');
+            }
           }
           
           setLoadingProgress(100);
