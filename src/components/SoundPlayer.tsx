@@ -3,25 +3,26 @@ import * as Tone from 'tone';
 import { Play, Pause, Volume2, VolumeX } from 'lucide-react';
 
 // Sound definitions - can be frequency (number), noise type (string), or audio file (object)
-type SoundType = number | 'pink' | 'brown' | 'green' | 'white' | { type: 'file'; path: string };
+export type SoundType = number | 'pink' | 'brown' | 'green' | 'white' | 'bath' | { type: 'file'; path: string };
 
-const SOUNDS: Record<string, SoundType> = {
-  // Solfeggio Frequencies
-  '174 Hz (Grounding)': 174,
-  '285 Hz (Tissue Regeneration)': 285,
-  '396 Hz (Release Fear)': 396,
-  '417 Hz (Clear Negativity)': 417,
-  '528 Hz (Love/Miracle)': 528,
-  '639 Hz (Emotional Harmony)': 639,
-  '741 Hz (Detoxification)': 741,
-  '852 Hz (Third Eye)': 852,
-  '963 Hz (Crown Chakra)': 963,
+export const SOUNDS: Record<string, SoundType> = {
+  // Solfeggio Frequencies (using audio files from /public)
+  '174 Hz (Grounding)': { type: 'file', path: '/174hz.mp3' },
+  '285 Hz (Tissue Regeneration)': { type: 'file', path: '/285hz.mp3' },
+  '396 Hz (Release Fear)': { type: 'file', path: '/396hz.mp3' },
+  '417 Hz (Clear Negativity)': { type: 'file', path: '/417hz.mp3' },
+  '528 Hz (Love/Miracle)': { type: 'file', path: '/528hz.mp3' },
+  '639 Hz (Emotional Harmony)': { type: 'file', path: '/639hz.mp3' },
+  '741 Hz (Detoxification)': { type: 'file', path: '/741hz.mp3' },
+  '852 Hz (Third Eye)': { type: 'file', path: '/852hz.mp3' },
+  '963 Hz (Crown Chakra)': { type: 'file', path: '/963hz.mp3' },
   
   // Noise Types - use audio files for better quality
-  'Pink Noise': 'pink',
-  'Brown Noise': 'brown',
+  'Pink Noise': { type: 'file', path: '/pink-noise.mp3' },
+  'Brown Noise': { type: 'file', path: '/brown-noise.mp3' },
   'White Noise': { type: 'file', path: '/white-noise.mp3' },
   'Green Noise': 'green', // Generated with Tone.js
+  'Green Noise 2': 'green', // Generated with Tone.js (same as Green Noise)
   
   // Nature Sounds
   'Deschutes River': { type: 'file', path: '/deschutes-river.mp3' },
@@ -32,6 +33,7 @@ const SOUNDS: Record<string, SoundType> = {
   'Wind Chimes': { type: 'file', path: '/wind-chimes.mp3' },
   'Cat Purr': { type: 'file', path: '/cat-purr.mp3' },
   'Wind': { type: 'file', path: '/wind.mp3' },
+  'Bath Sound': 'bath', // Generated with Tone.js - water/bath ambience
   
   // Legacy frequencies (keeping for compatibility)
   'Healing (432 Hz)': 432,
@@ -261,6 +263,19 @@ export function SoundPlayer({
             });
             noiseGen.connect(filter);
             filter.connect(volumeControlRef.current!);
+          } else if (soundDef === 'bath') {
+            // Create bath/water sound using filtered brown noise (sounds like water)
+            noiseGen = new Tone.Noise({
+              type: 'brown',
+            });
+            // Apply a low-pass filter to create a warm, water-like sound
+            const filter = new Tone.Filter({
+              frequency: 800,
+              type: 'lowpass',
+              Q: 1,
+            });
+            noiseGen.connect(filter);
+            filter.connect(volumeControlRef.current!);
           } else {
             noiseGen = new Tone.Noise({
               type: soundDef as 'pink' | 'brown' | 'white',
@@ -307,8 +322,17 @@ export function SoundPlayer({
           setLoadingProgress(30);
           
           // Load the buffer - this is the slow part for large files
-          // Load the buffer - pass the URL to load()
-          await audioPlayer.load(soundDef.path);
+          // Load the buffer - pass the URL to load() with error handling
+          try {
+            await audioPlayer.load(soundDef.path);
+          } catch (loadError) {
+            console.error('Tone.Player.load() error:', loadError);
+            const errorMsg = loadError instanceof Error ? loadError.message : String(loadError);
+            if (errorMsg.includes('decode') || errorMsg.includes('DecodeError') || errorMsg.includes('Unable to decode')) {
+              throw new Error(`Unable to decode audio file: ${soundDef.path}. The file may be corrupted, in an unsupported format, or not a valid MP3 file.`);
+            }
+            throw loadError;
+          }
           
           // Wait for buffer to be fully ready with retry logic
           let attempts = 0;
@@ -325,8 +349,13 @@ export function SoundPlayer({
           if (!audioPlayer.buffer || !audioPlayer.buffer.loaded) {
             await new Promise(resolve => setTimeout(resolve, 500));
             if (!audioPlayer.buffer || !audioPlayer.buffer.loaded) {
-              throw new Error('Buffer did not load successfully after waiting');
+              throw new Error(`Buffer did not load successfully for ${soundDef.path}. File may not exist (404) or is corrupted.`);
             }
+          }
+          
+          // Verify buffer has valid duration
+          if (audioPlayer.buffer.duration === 0 || isNaN(audioPlayer.buffer.duration)) {
+            throw new Error(`Audio file ${soundDef.path} has invalid duration. File may be corrupted or empty.`);
           }
           
           setLoadingProgress(100);
@@ -553,8 +582,8 @@ export function SoundPlayer({
             Sound Therapy
           </h2>
           <div className="flex items-center gap-4 flex-shrink-0">
-            <button
-              onClick={toggleMute}
+        <button
+          onClick={toggleMute}
               className="hover:opacity-80 transition-all duration-3000 backdrop-blur-sm p-3 border"
               style={{
                 color: colorScheme.textColor,
@@ -562,19 +591,19 @@ export function SoundPlayer({
                 borderColor: `${colorScheme.primaryColor}4D`,
                 borderRadius: '8px'
               }}
-            >
-              {isMuted ? (
+        >
+          {isMuted ? (
                 <VolumeX className="w-6 h-6" />
-              ) : (
+          ) : (
                 <Volume2 className="w-6 h-6" />
-              )}
-            </button>
+          )}
+        </button>
           </div>
-        </div>
-        
+      </div>
+      
         <div className="space-y-6">
-          <select
-            value={selectedSound}
+        <select
+          value={selectedSound}
             onChange={(e) => handleSoundChange(e.target.value as keyof typeof SOUNDS)}
             className="w-full p-4 text-xl border-2 backdrop-blur-sm text-white placeholder-white/70 focus:outline-none focus:ring-2 transition-all duration-3000"
             style={{
@@ -583,13 +612,13 @@ export function SoundPlayer({
               borderColor: `${colorScheme.primaryColor}4D`,
               '--tw-ring-color': colorScheme.primaryColor
             } as React.CSSProperties}
-          >
+        >
             {Object.keys(SOUNDS).map((sound) => (
               <option key={sound} value={sound} style={{ backgroundColor: colorScheme.primaryColor, color: 'white' }}>
-                {sound}
-              </option>
-            ))}
-          </select>
+              {sound}
+            </option>
+          ))}
+        </select>
 
           {/* Timer dropdown */}
           <div className="space-y-2">
@@ -619,8 +648,8 @@ export function SoundPlayer({
             </select>
           </div>
 
-          <button
-            onClick={toggleSound}
+        <button
+          onClick={toggleSound}
             disabled={isLoading}
             className="w-full py-6 px-8 text-2xl text-white 
                      transition-all duration-3000 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl border backdrop-blur-sm hover:opacity-90 disabled:opacity-70 disabled:cursor-wait relative overflow-hidden"
@@ -639,36 +668,36 @@ export function SoundPlayer({
             {isLoading ? (
               <span className="relative z-10">Loading... {Math.round(loadingProgress)}%</span>
             ) : isPlaying ? (
-              <>
-                <Pause className="w-8 h-8" />
-                <span>Pause</span>
-              </>
-            ) : (
-              <>
-                <Play className="w-8 h-8" />
-                <span>Play</span>
-              </>
-            )}
-          </button>
+            <>
+              <Pause className="w-8 h-8" />
+              <span>Pause</span>
+            </>
+          ) : (
+            <>
+              <Play className="w-8 h-8" />
+              <span>Play</span>
+            </>
+          )}
+        </button>
 
           <div className="space-y-3">
             <div className="flex items-center justify-between transition-colors duration-3000" style={{ color: colorScheme.textColor }}>
               <span className="text-lg font-medium">Volume</span>
               <span className="text-sm font-mono">{isMuted ? 'Muted' : `${Math.round(((volume + 40) / 40) * 100)}%`}</span>
             </div>
-            <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-4">
               <VolumeX className="w-5 h-5 transition-colors duration-3000" style={{ color: `${colorScheme.textColor}B3` }} />
-              <input
-                type="range"
-                min="-40"
-                max="0"
+          <input
+            type="range"
+            min="-40"
+            max="0"
                 value={volume}
-                onChange={handleVolumeChange}
+            onChange={handleVolumeChange}
                 className="flex-1 h-3 rounded-full appearance-none cursor-pointer transition-all duration-3000 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
                 style={{
                   background: `linear-gradient(to right, ${colorScheme.primaryColor}99 0%, ${colorScheme.primaryColor}99 ${((volume + 40) / 40) * 100}%, rgba(255, 255, 255, 0.2) ${((volume + 40) / 40) * 100}%, rgba(255, 255, 255, 0.2) 100%)`
                 }}
-              />
+          />
               <Volume2 className="w-5 h-5 transition-colors duration-3000" style={{ color: `${colorScheme.textColor}B3` }} />
             </div>
           </div>

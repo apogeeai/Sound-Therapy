@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { SoundPlayer } from './components/SoundPlayer';
-import { Brain, Image } from 'lucide-react';
+import { SoundBoard } from './components/SoundBoard';
+import { Brain, Image, Music } from 'lucide-react';
 
 // Relaxing scenery backgrounds - using Unsplash images with color-matched overlays
 const SCENERIES = [
@@ -51,6 +52,7 @@ const SCENERIES = [
 function App() {
   const [, setCurrentFrequency] = useState(432);
   const [currentScenery, setCurrentScenery] = useState(0);
+  const [viewMode, setViewMode] = useState<'player' | 'board'>('player');
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -100,7 +102,7 @@ function App() {
             className="text-6xl font-bold mb-4 drop-shadow-glow transition-colors duration-3000"
             style={{ color: '#ffffff' }}
           >
-            AuDHD Sound Therapy
+            Sound Therapy
           </h1>
           <p 
             className="text-xl drop-shadow-lg transition-colors duration-3000"
@@ -110,12 +112,50 @@ function App() {
           </p>
         </div>
 
-        <div className="flex justify-center">
-          <SoundPlayer 
-            onFrequencyChange={setCurrentFrequency} 
-            sceneryIndex={currentScenery}
-            colorScheme={SCENERIES[currentScenery]}
-          />
+        <div className="flex flex-col items-center gap-6 w-full">
+          {/* Mode Toggle */}
+          <div className="flex gap-4">
+            <button
+              onClick={() => setViewMode('player')}
+              className="px-6 py-3 rounded-lg transition-all duration-3000 backdrop-blur-sm border"
+              style={{
+                backgroundColor: viewMode === 'player' 
+                  ? `${SCENERIES[currentScenery].primaryColor}CC` 
+                  : `${SCENERIES[currentScenery].primaryColor}30`,
+                borderColor: `${SCENERIES[currentScenery].primaryColor}4D`,
+                color: '#ffffff',
+                borderRadius: '8px'
+              }}
+            >
+              Single Sound
+            </button>
+            <button
+              onClick={() => setViewMode('board')}
+              className="px-6 py-3 rounded-lg transition-all duration-3000 backdrop-blur-sm border"
+              style={{
+                backgroundColor: viewMode === 'board' 
+                  ? `${SCENERIES[currentScenery].primaryColor}CC` 
+                  : `${SCENERIES[currentScenery].primaryColor}30`,
+                borderColor: `${SCENERIES[currentScenery].primaryColor}4D`,
+                color: '#ffffff',
+                borderRadius: '8px'
+              }}
+            >
+              <Music className="w-5 h-5 inline mr-2" />
+              Sound Board
+            </button>
+          </div>
+
+          {/* Content */}
+          {viewMode === 'player' ? (
+            <SoundPlayer 
+              onFrequencyChange={setCurrentFrequency} 
+              sceneryIndex={currentScenery}
+              colorScheme={SCENERIES[currentScenery]}
+            />
+          ) : (
+            <SoundBoard colorScheme={SCENERIES[currentScenery]} />
+          )}
         </div>
       </div>
 
